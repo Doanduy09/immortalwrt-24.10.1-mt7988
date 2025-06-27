@@ -40,8 +40,8 @@ diff -u -r a/drivers/net/ethernet/mediatek/mtk_eth_soc.c b/drivers/net/ethernet/
  	data |= TX_DMA_SWC_V2 | QID_BITS_V2(info->qid);
 +	if(info->ext_ppe) {
 +	printk_ratelimited(KERN_WARNING "eth_soc sent to ppe");
-+	data &= ~(0xf << TX_DMA_FPORT_SHIFT_V2);
-+	data |= 0x3 << TX_DMA_FPORT_SHIFT_V2;
++	data &= ~(TX_DMA_FPORT_MASK_V2 << TX_DMA_FPORT_SHIFT_V2);
++	data |= (PSE_PPE0_PORT & TX_DMA_FPORT_MASK_V2) << TX_DMA_FPORT_SHIFT_V2;
 +	}
  	WRITE_ONCE(desc->txd4, data);
  
