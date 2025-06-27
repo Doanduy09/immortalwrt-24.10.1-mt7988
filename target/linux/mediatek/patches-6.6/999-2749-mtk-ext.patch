@@ -82,7 +82,7 @@ diff -u -r a/drivers/net/ethernet/mediatek/mtk_eth_soc.c b/drivers/net/ethernet/
 +		
 +		if ( (mac == 4) || ((FIELD_GET(MTK_RXD5_PPE_CPU_REASON, trxd.rxd5)) == HIT_BIND_FORCE_TO_CPU)) {
 +		printk_ratelimited(KERN_WARNING "mac is %d",mac);
-+		mac = 0;
++		mac = 1;
 +		sent_ppd = 1;
 +		}
  
