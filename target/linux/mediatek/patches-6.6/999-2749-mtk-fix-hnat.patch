@@ -23,7 +23,7 @@ diff -u -r a/arch/arm64/boot/dts/mediatek/mt7988a.dtsi b/arch/arm64/boot/dts/med
  			reg = <0 0x151a5000 0 0x1000>;
 diff -u -r a/drivers/net/ethernet/mediatek/mtk_eth_soc.c b/drivers/net/ethernet/mediatek/mtk_eth_soc.c
 --- a/drivers/net/ethernet/mediatek/mtk_eth_soc.c	2025-06-27 08:33:11.596002377 +0800
-+++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.c	2025-06-27 20:53:39.366000273 +0800
++++ b/drivers/net/ethernet/mediatek/mtk_eth_soc.c	2025-06-27 23:26:13.040000357 +0800
 @@ -37,7 +37,8 @@
  #if defined(CONFIG_NET_MEDIATEK_HNAT) || defined(CONFIG_NET_MEDIATEK_HNAT_MODULE)
  #include "mtk_hnat/nf_hnat_mtk.h"
@@ -34,19 +34,18 @@ diff -u -r a/drivers/net/ethernet/mediatek/mtk_eth_soc.c b/drivers/net/ethernet/
  static int mtk_msg_level = -1;
  module_param_named(msg_level, mtk_msg_level, int, 0);
  MODULE_PARM_DESC(msg_level, "Message level (-1=defaults,0=none,...,16=all)");
-@@ -1512,6 +1513,11 @@
+@@ -1512,6 +1513,10 @@
  	}
  
  	data |= TX_DMA_SWC_V2 | QID_BITS_V2(info->qid);
 +	if(info->ext_ppe) {
-+	printk_ratelimited(KERN_WARNING "eth_soc sent to ppe");
-+	data &= ~(TX_DMA_FPORT_MASK_V2 << TX_DMA_FPORT_SHIFT_V2);
-+	data |= (PSE_PPE0_PORT & TX_DMA_FPORT_MASK_V2) << TX_DMA_FPORT_SHIFT_V2;
++	data &= ~(0xf << TX_DMA_FPORT_SHIFT_V2);
++	data |= 0x3 << TX_DMA_FPORT_SHIFT_V2;
 +	}
  	WRITE_ONCE(desc->txd4, data);
  
  	data = 0;
-@@ -1521,8 +1527,10 @@
+@@ -1521,8 +1526,10 @@
  		/* tx checksum offload */
  		if (info->csum)
  			data |= TX_DMA_CHKSUM_V2;
@@ -58,7 +57,7 @@ diff -u -r a/drivers/net/ethernet/mediatek/mtk_eth_soc.c b/drivers/net/ethernet/
  	}
  	WRITE_ONCE(desc->txd5, data);
  
-@@ -1559,6 +1567,7 @@
+@@ -1559,6 +1566,7 @@
  		.vlan_tci = skb_vlan_tag_get(skb),
  		.first = true,
  		.last = !skb_is_nonlinear(skb),
@@ -66,7 +65,7 @@ diff -u -r a/drivers/net/ethernet/mediatek/mtk_eth_soc.c b/drivers/net/ethernet/
  	};
  	struct netdev_queue *txq;
  	struct mtk_mac *mac = netdev_priv(dev);
-@@ -2205,7 +2214,8 @@
+@@ -2205,7 +2213,8 @@
  	int done = 0, bytes = 0;
  	dma_addr_t dma_addr = DMA_MAPPING_ERROR;
  	int ppe_idx = 0;
@@ -76,7 +75,22 @@ diff -u -r a/drivers/net/ethernet/mediatek/mtk_eth_soc.c b/drivers/net/ethernet/
  	while (done < budget) {
  		unsigned int pktlen, *rxdcsum;
  		struct net_device *netdev;
-@@ -2242,6 +2252,12 @@
+@@ -2228,20 +2237,23 @@
+ 			u32 val = RX_DMA_GET_SPORT_V2(trxd.rxd5);
+ 
+ 			switch (val) {
+-			case PSE_GDM1_PORT:
+-			case PSE_GDM2_PORT:
+-				mac = val - 1;
+-				break;
+ 			case PSE_GDM3_PORT:
+ 				mac = MTK_GMAC3_ID;
+ 				break;
+ 			default:
++				mac = val - 1;
+ 				break;
+ 			}
+ 		} else if (!MTK_HAS_CAPS(eth->soc->caps, MTK_SOC_MT7628) &&
  			   !(trxd.rxd4 & RX_DMA_SPECIAL_TAG)) {
  			mac = RX_DMA_GET_SPORT(trxd.rxd4) - 1;
  		}
@@ -89,7 +103,7 @@ diff -u -r a/drivers/net/ethernet/mediatek/mtk_eth_soc.c b/drivers/net/ethernet/
  
  		if (unlikely(mac < 0 || mac >= MTK_MAX_DEVS ||
  			     !eth->netdev[mac]))
-@@ -2380,9 +2396,9 @@
+@@ -2380,9 +2392,9 @@
  		skb_hnat_alg(skb) = 0;
  		skb_hnat_filled(skb) = 0;
  		skb_hnat_magic_tag(skb) = HNAT_MAGIC_TAG;
@@ -102,7 +116,7 @@ diff -u -r a/drivers/net/ethernet/mediatek/mtk_eth_soc.c b/drivers/net/ethernet/
  
  		if (skb_hnat_reason(skb) == HIT_BIND_FORCE_TO_CPU) {
  			trace_printk("[%s] reason=0x%x(force to CPU) from WAN to Ext\n",
-@@ -2397,7 +2413,10 @@
+@@ -2397,7 +2409,10 @@
  		if (reason == MTK_PPE_CPU_REASON_HIT_UNBIND_RATE_REACHED)
  			mtk_ppe_check_skb(eth->ppe[ppe_idx], skb, hash);
  #endif
@@ -114,7 +128,7 @@ diff -u -r a/drivers/net/ethernet/mediatek/mtk_eth_soc.c b/drivers/net/ethernet/
  		skb_record_rx_queue(skb, 0);
  		napi_gro_receive(napi, skb);
  
-@@ -3638,8 +3657,8 @@
+@@ -3638,8 +3653,8 @@
  			mtk_gdm_config(eth, target_mac->id, gdm_config);
  		}
  		/* Reset and enable PSE */
@@ -125,7 +139,7 @@ diff -u -r a/drivers/net/ethernet/mediatek/mtk_eth_soc.c b/drivers/net/ethernet/
  
  		napi_enable(&eth->tx_napi);
  		napi_enable(&eth->rx_napi);
-@@ -4727,11 +4746,8 @@
+@@ -4727,11 +4742,8 @@
  {
  	struct mtk_mac *mac = netdev_priv(dev);
  	unsigned int queue = 0;
@@ -159,4 +173,3 @@ diff -u -r a/drivers/net/ethernet/mediatek/mtk_eth_soc.h b/drivers/net/ethernet/
  };
  
  struct mtk_reg_map {
-
