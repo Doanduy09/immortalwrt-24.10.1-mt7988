@@ -12,6 +12,7 @@ KERNEL_PATCHVER:=6.6
 
 include $(INCLUDE_DIR)/target.mk
 DEFAULT_PACKAGES += \
-	kmod-leds-gpio kmod-gpio-button-hotplug autocore
+	kmod-leds-gpio kmod-gpio-button-hotplug autocore kmod-sfp \
+	kmod-mediatek_hnat mtk-smp mtkhqos_util
 
 $(eval $(call BuildTarget))
