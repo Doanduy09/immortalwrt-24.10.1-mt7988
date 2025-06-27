@@ -558,6 +558,7 @@ unsigned int do_hnat_ext_to_ge(struct sk_buff *skb, const struct net_device *in,
 			__func__, ntohs(skb->vlan_proto), skb->vlan_tci,
 			in->name, hnat_priv->g_ppdev->name);
 		skb->dev = hnat_priv->g_ppdev;
+		printk_ratelimited(KERN_WARNING "ext1 sent to dev %s vlan tci is 0x%x",skb->dev->name,skb->vlan_tci);
 		dev_queue_xmit(skb);
 		trace_printk("%s: called from %s successfully\n", __func__, func);
 		return 0;
