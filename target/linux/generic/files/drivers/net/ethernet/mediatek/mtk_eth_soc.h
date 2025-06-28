@@ -9,7 +9,6 @@
 #ifndef MTK_ETH_H
 #define MTK_ETH_H
 
-
 #include <linux/dma-mapping.h>
 #include <linux/netdevice.h>
 #include <linux/of_net.h>
