@@ -1,14 +1,5 @@
 --- a/drivers/pci/controller/pcie-mediatek-gen3.c	2025-06-28 21:30:09.724001441 +0800
-+++ b/drivers/pci/controller/pcie-mediatek-gen3.c	2025-06-29 18:21:12.636000290 +0800
-@@ -1021,7 +1021,7 @@
- 	struct device *dev = pcie->dev;
- 	struct platform_device *pdev = to_platform_device(dev);
- 	int err, i;
--
-+	
- 	err = mtk_pcie_init_irq_domains(pcie);
- 	if (err)
- 		return err;
++++ b/drivers/pci/controller/pcie-mediatek-gen3.c	2025-06-29 18:46:50.783000080 +0800
 @@ -1048,6 +1048,7 @@
  	struct platform_device *pdev = to_platform_device(dev);
  	struct resource *regs;
@@ -17,72 +8,17 @@
  
  	regs = platform_get_resource_byname(pdev, IORESOURCE_MEM, "pcie-mac");
  	if (!regs)
-@@ -1058,6 +1059,12 @@
+@@ -1057,6 +1058,10 @@
+ 		dev_err(dev, "failed to map register base\n");
  		return PTR_ERR(pcie->base);
  	}
- 
-+        val = readl_relaxed(pcie->base + PCIE_RST_CTRL_REG);
++	val = readl_relaxed(pcie->base + PCIE_RST_CTRL_REG);
 +        val |= PCIE_PE_RSTB;
 +        writel_relaxed(val, pcie->base + PCIE_RST_CTRL_REG);
-+
 +        mdelay(100);
-+
+ 
  	pcie->reg_base = regs->start;
  
- 	pcie->phy_reset = devm_reset_control_get_optional_exclusive(dev, "phy");
-@@ -1219,22 +1226,32 @@
- 	return err;
- }
- 
-+static void mtk_pcie_shutdown(struct platform_device *pdev)
-+{
-+	//struct mtk_gen3_pcie *pcie = platform_get_drvdata(pdev);
-+	//u32 val;
-+
-+	//val = readl_relaxed(pcie->base + PCIE_RST_CTRL_REG);
-+	//val |= PCIE_PE_RSTB;           
-+	//writel_relaxed(val, pcie->base + PCIE_RST_CTRL_REG);
-+
-+	mdelay(100);
-+}
- static int mtk_pcie_probe(struct platform_device *pdev)
- {
- 	struct device *dev = &pdev->dev;
- 	struct mtk_gen3_pcie *pcie;
- 	struct pci_host_bridge *host;
- 	int err;
--
-+	
- 	host = devm_pci_alloc_host_bridge(dev, sizeof(*pcie));
- 	if (!host)
- 		return -ENOMEM;
- 
- 	pcie = pci_host_bridge_priv(host);
--
- 	pcie->dev = dev;
- 	platform_set_drvdata(pdev, pcie);
--
-+		
- 	err = mtk_pcie_setup(pcie);
- 	if (err)
- 		return err;
-@@ -1256,7 +1273,7 @@
- {
- 	struct mtk_gen3_pcie *pcie = platform_get_drvdata(pdev);
- 	struct pci_host_bridge *host = pci_host_bridge_from_priv(pcie);
--
-+	
- 	pci_lock_rescan_remove();
- 	pci_stop_root_bus(host->bus);
- 	pci_remove_root_bus(host->bus);
-@@ -1466,6 +1483,7 @@
- 
- static struct platform_driver mtk_pcie_driver = {
- 	.probe = mtk_pcie_probe,
-+	.shutdown = mtk_pcie_shutdown,
- 	.remove_new = mtk_pcie_remove,
- 	.driver = {
- 		.name = "mtk-pcie-gen3",
 --- a/arch/arm64/boot/dts/mediatek/mt7988a.dtsi	2025-06-28 21:30:09.731001441 +0800
 +++ b/arch/arm64/boot/dts/mediatek/mt7988a.dtsi	2025-06-28 21:34:08.226001555 +0800
 @@ -1002,10 +1002,9 @@
