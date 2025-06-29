@@ -1,6 +1,6 @@
 --- a/drivers/pci/controller/pcie-mediatek-gen3.c	2025-06-28 21:30:09.724001441 +0800
-+++ b/drivers/pci/controller/pcie-mediatek-gen3.c	2025-06-29 17:11:54.676000545 +0800
-@@ -1219,6 +1219,17 @@
++++ b/drivers/pci/controller/pcie-mediatek-gen3.c	2025-06-29 17:26:24.661000959 +0800
+@@ -1219,19 +1219,34 @@
  	return err;
  }
  
@@ -18,7 +18,13 @@
  static int mtk_pcie_probe(struct platform_device *pdev)
  {
  	struct device *dev = &pdev->dev;
-@@ -1231,7 +1242,11 @@
+ 	struct mtk_gen3_pcie *pcie;
+ 	struct pci_host_bridge *host;
+ 	int err;
+-
++	u32 val;
+ 	host = devm_pci_alloc_host_bridge(dev, sizeof(*pcie));
+ 	if (!host)
  		return -ENOMEM;
  
  	pcie = pci_host_bridge_priv(host);
