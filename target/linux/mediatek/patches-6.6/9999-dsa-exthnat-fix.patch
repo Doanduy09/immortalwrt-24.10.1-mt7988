@@ -1,24 +1,25 @@
 --- a/drivers/pci/controller/pcie-mediatek-gen3.c	2025-06-28 21:30:09.724001441 +0800
-+++ b/drivers/pci/controller/pcie-mediatek-gen3.c	2025-06-29 18:46:50.783000080 +0800
-@@ -1048,6 +1048,7 @@
- 	struct platform_device *pdev = to_platform_device(dev);
- 	struct resource *regs;
- 	int ret;
++++ b/drivers/pci/controller/pcie-mediatek-gen3.c	2025-06-29 19:09:15.041000036 +0800
+@@ -1184,7 +1184,7 @@
+ static int mtk_pcie_setup(struct mtk_gen3_pcie *pcie)
+ {
+ 	int err;
+-
 +	u32 val;
- 
- 	regs = platform_get_resource_byname(pdev, IORESOURCE_MEM, "pcie-mac");
- 	if (!regs)
-@@ -1057,6 +1058,10 @@
- 		dev_err(dev, "failed to map register base\n");
- 		return PTR_ERR(pcie->base);
- 	}
+ 	err = mtk_pcie_parse_port(pcie);
+ 	if (err)
+ 		return err;
+@@ -1193,6 +1193,10 @@
+ 	 * The controller may have been left out of reset by the bootloader
+ 	 * so make sure that we get a clean start by asserting resets here.
+ 	 */
 +	       val = readl_relaxed(pcie->base + PCIE_RST_CTRL_REG);
 +        val |= PCIE_PE_RSTB;
 +        writel_relaxed(val, pcie->base + PCIE_RST_CTRL_REG);
-+        msleep(100);
- 
- 	pcie->reg_base = regs->start;
- 
++        mdelay(100);
+ 	reset_control_assert(pcie->phy_reset);
+ 	reset_control_assert(pcie->mac_reset);
+ 	usleep_range(10, 20);
 --- a/arch/arm64/boot/dts/mediatek/mt7988a.dtsi	2025-06-28 21:30:09.731001441 +0800
 +++ b/arch/arm64/boot/dts/mediatek/mt7988a.dtsi	2025-06-28 21:34:08.226001555 +0800
 @@ -1002,10 +1002,9 @@
