@@ -58,11 +58,11 @@ index 49bb70f..a868126 100644
  	val |= PCIE_MAC_RSTB | PCIE_PHY_RSTB | PCIE_BRG_RSTB | PCIE_PE_RSTB;
  	writel_relaxed(val, pcie->base + PCIE_RST_CTRL_REG);
  
-+	
-+		gpiod_set_value_cansleep(50, 0);
-+		msleep(200);
-+		gpiod_set_value_cansleep(50, 1);
-+	
++	if (pcie->wifi_reset) {
++		gpiod_set_value_cansleep(pcie->wifi_reset, 0);
++		msleep(pcie->wifi_reset_delay_ms);
++		gpiod_set_value_cansleep(pcie->wifi_reset, 1);
++	}
 +
  	/*
  	 * Described in PCIe CEM specification sections 2.2 (PERST# Signal)
