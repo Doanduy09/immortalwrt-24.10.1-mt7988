@@ -12,10 +12,10 @@
  		dev_err(dev, "failed to map register base\n");
  		return PTR_ERR(pcie->base);
  	}
-+	val = readl_relaxed(pcie->base + PCIE_RST_CTRL_REG);
++	       val = readl_relaxed(pcie->base + PCIE_RST_CTRL_REG);
 +        val |= PCIE_PE_RSTB;
 +        writel_relaxed(val, pcie->base + PCIE_RST_CTRL_REG);
-+        mdelay(100);
++        msleep(100);
  
  	pcie->reg_base = regs->start;
  
